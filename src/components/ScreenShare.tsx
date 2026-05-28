@@ -536,8 +536,12 @@ function ScreenShare() {
   }, [isViewing, tab]);
 
   function goFullscreen() {
-    if (isMobileViewport && screen.orientation?.lock) {
-      screen.orientation.lock('portrait').catch(() => {});
+    const orientation = screen.orientation as ScreenOrientation & {
+      lock?: (orientation: string) => Promise<void>;
+    };
+
+    if (isMobileViewport && typeof orientation.lock === 'function') {
+      orientation.lock('portrait').catch(() => {});
     }
 
     if (isMobileViewport) {

@@ -53,7 +53,7 @@ function ScreenShare() {
   const [joinRoomId, setJoinRoomId] = useState('');
   const [showLocalPreview, setShowLocalPreview] = useState(true);
   const [isLikelySelfCapture, setIsLikelySelfCapture] = useState(false);
-  const [isViewerExpanded, setIsViewerExpanded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoViewRef = useRef<HTMLVideoElement | null>(null);
@@ -70,7 +70,6 @@ function ScreenShare() {
   const teardownInProgressRef = useRef(false);
   const supabaseAvailableRef = useRef(false);
   const trackEndedListenersRef = useRef<MediaStreamTrack[]>([]);
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   useEffect(() => {
     try {
@@ -86,18 +85,6 @@ function ScreenShare() {
       setJoinRoomId(room);
       setTab('view');
     }
-  }, []);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 900px)');
-    const updateViewportMode = () => setIsMobileViewport(mediaQuery.matches);
-
-    updateViewportMode();
-    mediaQuery.addEventListener('change', updateViewportMode);
-
-    return () => {
-      mediaQuery.removeEventListener('change', updateViewportMode);
-    };
   }, []);
 
   useEffect(() => {
@@ -526,7 +513,6 @@ function ScreenShare() {
     await teardownSession();
     roleRef.current = null;
     setIsViewing(false);
-    setIsViewerExpanded(false);
   }
 
   useEffect(() => {
@@ -536,30 +522,27 @@ function ScreenShare() {
   }, [isViewing, tab]);
 
   useEffect(() => {
-    if (isMobileViewport && tab === 'view') {
-      setIsViewerExpanded(true);
-    }
-    if (!isMobileViewport) {
-      setIsViewerExpanded(false);
-    }
-  }, [isMobileViewport, tab]);
-
-  function goFullscreen() {
-    const orientation = screen.orientation as ScreenOrientation & {
-      lock?: (orientation: string) => Promise<void>;
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === viewerStageRef.current);
     };
 
-    if (isMobileViewport && typeof orientation.lock === 'function') {
-      orientation.lock('portrait').catch(() => {});
-    }
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    onFullscreenChange();
 
-    if (isMobileViewport) {
-      setIsViewerExpanded(true);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  function goFullscreen() {
+    const el = viewerStageRef.current ?? remoteVideoViewRef.current;
+    if (!el) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
       return;
     }
 
-    const el = viewerStageRef.current ?? remoteVideoViewRef.current;
-    if (!el) return;
     const fullscreen = el.requestFullscreen?.bind(el);
     if (!fullscreen) return;
 
@@ -676,18 +659,15 @@ function ScreenShare() {
               </div>
             </div>
           ) : (
-            <div className={`viewer-layout ${isViewerExpanded ? 'viewer-layout-expanded' : ''}`}>
-              <div
-                ref={viewerStageRef}
-                className={`video-shell video-shell-viewer viewer-stage ${isViewerExpanded ? 'viewer-stage-expanded' : ''}`}
-              >
+            <div className="viewer-layout">
+              <div ref={viewerStageRef} className="video-shell video-shell-viewer viewer-stage">
                 {isViewing ? (
                   <video
                     ref={remoteVideoViewRef}
                     className="video video-viewer"
                     autoPlay
                     playsInline
-                    controls={!isMobileViewport}
+                    controls
                   />
                 ) : (
                   <div className="empty-state empty-state-viewer">
@@ -695,7 +675,7 @@ function ScreenShare() {
                   </div>
                 )}
 
-                <div className={`room-card room-card-viewer ${isViewerExpanded ? 'room-card-viewer-expanded' : ''}`}>
+                <div className="room-card room-card-viewer">
                   <div className="toolbar viewer-toolbar">
                     <input
                       className="field viewer-field"
@@ -715,16 +695,8 @@ function ScreenShare() {
                       </button>
                     )}
                     <button className="button button-ghost" onClick={goFullscreen} disabled={!isViewing}>
-                      Fullscreen
+                      {isFullscreen ? 'Exit full screen' : 'Fullscreen'}
                     </button>
-                    {isViewerExpanded && (
-                      <button
-                        className="button button-ghost"
-                        onClick={() => setIsViewerExpanded(false)}
-                      >
-                        Exit full screen
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>

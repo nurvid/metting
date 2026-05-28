@@ -58,6 +58,7 @@ function ScreenShare() {
   const remoteVideoViewRef = useRef<HTMLVideoElement | null>(null);
 
   const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
@@ -99,6 +100,21 @@ function ScreenShare() {
     }
     if (roleRef.current === 'viewer') {
       setIsViewing(state === 'connected' || state === 'completed');
+    }
+  }
+
+  function attachRemoteStream() {
+    const video = remoteVideoViewRef.current;
+    const stream = remoteStreamRef.current;
+    if (!video || !stream) return;
+
+    if (video.srcObject !== stream) {
+      video.srcObject = stream;
+    }
+
+    const playResult = video.play();
+    if (playResult) {
+      playResult.catch(() => {});
     }
   }
 
@@ -170,12 +186,15 @@ function ScreenShare() {
     };
 
     if (role === 'viewer') {
-      const remoteStream = new MediaStream();
+      remoteStreamRef.current = new MediaStream();
       pc.ontrack = (event) => {
-        event.streams[0]?.getTracks().forEach((track) => remoteStream.addTrack(track));
-        if (remoteVideoViewRef.current) {
-          remoteVideoViewRef.current.srcObject = remoteStream;
+        const remoteStream = remoteStreamRef.current;
+        if (!remoteStream) return;
+
+        if (!remoteStream.getTracks().some((track) => track.id === event.track.id)) {
+          remoteStream.addTrack(event.track);
         }
+        attachRemoteStream();
       };
     }
 
@@ -365,6 +384,7 @@ function ScreenShare() {
       }
 
       trackEndedListenersRef.current = [];
+      remoteStreamRef.current = null;
 
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = null;
@@ -492,6 +512,12 @@ function ScreenShare() {
     roleRef.current = null;
     setIsViewing(false);
   }
+
+  useEffect(() => {
+    if (isViewing) {
+      attachRemoteStream();
+    }
+  }, [isViewing, tab]);
 
   function goFullscreen() {
     const el = remoteVideoViewRef.current;

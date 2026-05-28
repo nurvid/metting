@@ -634,45 +634,45 @@ function ScreenShare() {
               </div>
             </div>
           ) : (
-            <div className="grid" style={{ gap: 16 }}>
-              <div className="video-shell">
+            <div className="viewer-layout">
+              <div className="video-shell video-shell-viewer viewer-stage">
                 {isViewing ? (
                   <video
                     ref={remoteVideoViewRef}
-                    className="video"
+                    className="video video-viewer"
                     autoPlay
                     playsInline
                     controls
                   />
                 ) : (
-                  <div className="empty-state">
+                  <div className="empty-state empty-state-viewer">
                     No stream yet. Paste the room ID and join.
                   </div>
                 )}
-              </div>
 
-              <div className="room-card">
-                <div className="toolbar">
-                  <input
-                    className="field"
-                    type="text"
-                    placeholder="Paste room ID"
-                    value={joinRoomId}
-                    onChange={(e) => setJoinRoomId(e.target.value)}
-                    disabled={isViewing}
-                  />
-                  {!isViewing ? (
-                    <button className="button button-primary" onClick={joinRoom}>
-                      Join
+                <div className="room-card room-card-viewer">
+                  <div className="toolbar viewer-toolbar">
+                    <input
+                      className="field viewer-field"
+                      type="text"
+                      placeholder="Paste room ID"
+                      value={joinRoomId}
+                      onChange={(e) => setJoinRoomId(e.target.value)}
+                      disabled={isViewing}
+                    />
+                    {!isViewing ? (
+                      <button className="button button-primary" onClick={joinRoom}>
+                        Join
+                      </button>
+                    ) : (
+                      <button className="button button-danger" onClick={leaveRoom}>
+                        Leave
+                      </button>
+                    )}
+                    <button className="button button-ghost" onClick={goFullscreen} disabled={!isViewing}>
+                      Fullscreen
                     </button>
-                  ) : (
-                    <button className="button button-danger" onClick={leaveRoom}>
-                      Leave
-                    </button>
-                  )}
-                  <button className="button button-ghost" onClick={goFullscreen} disabled={!isViewing}>
-                    Fullscreen
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>

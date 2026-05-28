@@ -417,6 +417,53 @@
   background: #e2e8f0;
 }
 
+.video-shell-viewer {
+  width: 100%;
+  height: clamp(360px, calc(100dvh - 220px), 980px);
+  min-height: 0;
+}
+
+.video-viewer {
+  height: 100%;
+  aspect-ratio: auto;
+  object-fit: contain;
+  background: #0f172a;
+}
+
+.viewer-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.room-card-viewer {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  margin-top: 0;
+  z-index: 2;
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.viewer-stage {
+  position: relative;
+}
+
+.viewer-toolbar {
+  align-items: center;
+}
+
+.viewer-field {
+  width: min(100%, 420px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.empty-state-viewer {
+  min-height: 100%;
+}
+
 .empty-state {
   display: grid;
   place-items: center;
@@ -440,6 +487,20 @@
   .hero,
   .preview-grid {
     grid-template-columns: 1fr;
+  }
+
+  .video-shell-viewer {
+    height: clamp(320px, calc(100dvh - 200px), 72vh);
+  }
+
+  .video-viewer {
+    height: 100%;
+  }
+
+  .room-card-viewer {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
   }
 
   .app-frame {

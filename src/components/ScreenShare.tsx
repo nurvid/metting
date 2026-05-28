@@ -535,6 +535,15 @@ function ScreenShare() {
     }
   }, [isViewing, tab]);
 
+  useEffect(() => {
+    if (isMobileViewport && tab === 'view') {
+      setIsViewerExpanded(true);
+    }
+    if (!isMobileViewport) {
+      setIsViewerExpanded(false);
+    }
+  }, [isMobileViewport, tab]);
+
   function goFullscreen() {
     const orientation = screen.orientation as ScreenOrientation & {
       lock?: (orientation: string) => Promise<void>;

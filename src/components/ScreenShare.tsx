@@ -53,9 +53,11 @@ function ScreenShare() {
   const [joinRoomId, setJoinRoomId] = useState('');
   const [showLocalPreview, setShowLocalPreview] = useState(true);
   const [isLikelySelfCapture, setIsLikelySelfCapture] = useState(false);
+  const [isViewerExpanded, setIsViewerExpanded] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoViewRef = useRef<HTMLVideoElement | null>(null);
+  const viewerStageRef = useRef<HTMLDivElement | null>(null);
 
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -68,6 +70,7 @@ function ScreenShare() {
   const teardownInProgressRef = useRef(false);
   const supabaseAvailableRef = useRef(false);
   const trackEndedListenersRef = useRef<MediaStreamTrack[]>([]);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   useEffect(() => {
     try {
@@ -83,6 +86,18 @@ function ScreenShare() {
       setJoinRoomId(room);
       setTab('view');
     }
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 900px)');
+    const updateViewportMode = () => setIsMobileViewport(mediaQuery.matches);
+
+    updateViewportMode();
+    mediaQuery.addEventListener('change', updateViewportMode);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewportMode);
+    };
   }, []);
 
   useEffect(() => {
@@ -511,6 +526,7 @@ function ScreenShare() {
     await teardownSession();
     roleRef.current = null;
     setIsViewing(false);
+    setIsViewerExpanded(false);
   }
 
   useEffect(() => {
@@ -520,10 +536,23 @@ function ScreenShare() {
   }, [isViewing, tab]);
 
   function goFullscreen() {
-    const el = remoteVideoViewRef.current;
+    if (isMobileViewport && screen.orientation?.lock) {
+      screen.orientation.lock('portrait').catch(() => {});
+    }
+
+    if (isMobileViewport) {
+      setIsViewerExpanded(true);
+      return;
+    }
+
+    const el = viewerStageRef.current ?? remoteVideoViewRef.current;
     if (!el) return;
-    if (el.requestFullscreen) {
-      el.requestFullscreen().catch(() => {});
+    const fullscreen = el.requestFullscreen?.bind(el);
+    if (!fullscreen) return;
+
+    const request = fullscreen();
+    if (request) {
+      request.catch(() => {});
     }
   }
 
@@ -634,15 +663,18 @@ function ScreenShare() {
               </div>
             </div>
           ) : (
-            <div className="viewer-layout">
-              <div className="video-shell video-shell-viewer viewer-stage">
+            <div className={`viewer-layout ${isViewerExpanded ? 'viewer-layout-expanded' : ''}`}>
+              <div
+                ref={viewerStageRef}
+                className={`video-shell video-shell-viewer viewer-stage ${isViewerExpanded ? 'viewer-stage-expanded' : ''}`}
+              >
                 {isViewing ? (
                   <video
                     ref={remoteVideoViewRef}
                     className="video video-viewer"
                     autoPlay
                     playsInline
-                    controls
+                    controls={!isMobileViewport}
                   />
                 ) : (
                   <div className="empty-state empty-state-viewer">
@@ -650,7 +682,7 @@ function ScreenShare() {
                   </div>
                 )}
 
-                <div className="room-card room-card-viewer">
+                <div className={`room-card room-card-viewer ${isViewerExpanded ? 'room-card-viewer-expanded' : ''}`}>
                   <div className="toolbar viewer-toolbar">
                     <input
                       className="field viewer-field"
@@ -672,6 +704,14 @@ function ScreenShare() {
                     <button className="button button-ghost" onClick={goFullscreen} disabled={!isViewing}>
                       Fullscreen
                     </button>
+                    {isViewerExpanded && (
+                      <button
+                        className="button button-ghost"
+                        onClick={() => setIsViewerExpanded(false)}
+                      >
+                        Exit full screen
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

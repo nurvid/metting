@@ -515,7 +515,7 @@
 }
 
 .viewer-stage-expanded .video-viewer {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .viewer-stage-expanded .room-card-viewer {

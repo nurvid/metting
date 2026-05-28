@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///home/xi6th/Downloads/ShareScreen/sharescreen/src/app/page.tsx"],"sourcesContent":["import ScreenShare from '../components/ScreenShare';\n\nexport default function Page() {\n  return <ScreenShare />;\n}\n"],"names":["Page","ScreenShare"],"mappings":";;;;;;;;;;;;AAEe,SAASA;IACtB,qBAAO,8OAACC;;;;;AACV"}}]
+}
